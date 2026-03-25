@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
@@ -7,6 +9,10 @@ from sqlalchemy.orm import Session
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models.user import User
+from app.services.permission_service import (
+    get_user_permission_for_resource,
+    has_permission,
+)
 
 
 bearer_scheme = HTTPBearer()
@@ -47,3 +53,25 @@ def get_current_user(
         )
 
     return user
+
+
+def require_permission(resource_name: str, action: str) -> Callable:
+    def permission_dependency(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> User:
+        permission = get_user_permission_for_resource(
+            db=db,
+            user=current_user,
+            resource_name=resource_name,
+        )
+
+        if not has_permission(permission, action):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Not enough permissions to {action} {resource_name}.",
+            )
+
+        return current_user
+
+    return permission_dependency
