@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models.user import User
+from app.models.role import Role, UserRole
 from app.services.permission_service import (
     get_user_permission_for_resource,
     has_permission,
@@ -75,3 +76,24 @@ def require_permission(resource_name: str, action: str) -> Callable:
         return current_user
 
     return permission_dependency
+
+def require_admin(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    admin_role = db.scalar(
+        select(Role)
+        .join(UserRole, UserRole.role_id == Role.id)
+        .where(
+            UserRole.user_id == current_user.id,
+            Role.name == "admin",
+        )
+    )
+
+    if not admin_role:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required.",
+        )
+
+    return current_user
