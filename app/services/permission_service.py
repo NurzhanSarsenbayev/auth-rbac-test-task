@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.role import UserRole
 from app.models.resource import Resource
+from app.models.role import UserRole
 from app.models.role_permission import RolePermission
 from app.models.user import User
 
@@ -12,9 +12,7 @@ def get_user_permission_for_resource(
     user: User,
     resource_name: str,
 ) -> RolePermission | None:
-    resource = db.scalar(
-        select(Resource).where(Resource.name == resource_name)
-    )
+    resource = db.scalar(select(Resource).where(Resource.name == resource_name))
     if not resource:
         return None
 
@@ -42,5 +40,21 @@ def has_permission(
         "update": permission.can_update,
         "delete": permission.can_delete,
     }
-
     return action_map.get(action, False)
+
+
+def can_access_object(
+    permission: RolePermission | None,
+    owner_id: int,
+    current_user_id: int,
+) -> bool:
+    if permission is None:
+        return False
+
+    if permission.scope == "all":
+        return True
+
+    if permission.scope == "own":
+        return owner_id == current_user_id
+
+    return False
