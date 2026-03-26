@@ -2,10 +2,11 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
+from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
@@ -13,8 +14,6 @@ from app.models.resource import Resource
 from app.models.role import Role, UserRole
 from app.models.role_permission import RolePermission
 from app.models.user import User
-from app.core.security import hash_password
-
 
 engine = create_engine(settings.test_database_url)
 TestingSessionLocal = sessionmaker(
