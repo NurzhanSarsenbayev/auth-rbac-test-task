@@ -1,14 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
-from app.core.security import hash_password
+from app.core.security import decode_access_token, hash_password
 from app.db.session import get_db
+from app.models.revoked_token import RevokedToken
 from app.models.user import User
 from app.schemas.user import UpdateUserRequest, UserResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
+bearer_scheme = HTTPBearer()
 
 
 @router.get("/me", response_model=UserResponse)
@@ -61,9 +64,25 @@ def update_me(
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 def delete_me(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
+    payload = decode_access_token(credentials.credentials)
+    jti = payload.get("jti")
+
+    if not jti:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload.",
+        )
+
+    existing_revoked_token = db.scalar(
+        select(RevokedToken).where(RevokedToken.jti == jti)
+    )
+    if not existing_revoked_token:
+        db.add(RevokedToken(jti=jti))
+
     current_user.is_deleted = True
     current_user.is_active = False
 

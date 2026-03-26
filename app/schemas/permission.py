@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -16,7 +18,7 @@ class PermissionResponse(BaseModel):
     can_create: bool
     can_update: bool
     can_delete: bool
-    scope: str
+    scope: Literal["own", "all"]
 
     model_config = {"from_attributes": True}
 
@@ -26,4 +28,4 @@ class UpdatePermissionRequest(BaseModel):
     can_create: bool | None = None
     can_update: bool | None = None
     can_delete: bool | None = None
-    scope: str | None = None
+    scope: Literal["own", "all"] | None = None
