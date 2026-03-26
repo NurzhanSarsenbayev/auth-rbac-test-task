@@ -6,6 +6,7 @@ from alembic import context
 from app.core.config import settings
 from app.db.base import Base
 from app.models.resource import Resource  # noqa: F401
+from app.models.revoked_token import RevokedToken  # noqa: F401
 from app.models.role import Role, UserRole  # noqa: F401
 from app.models.role_permission import RolePermission  # noqa: F401
 from app.models.user import User  # noqa: F401

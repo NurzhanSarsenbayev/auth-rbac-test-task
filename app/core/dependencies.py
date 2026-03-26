@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
 from app.db.session import get_db
+from app.models.revoked_token import RevokedToken
 from app.models.role import Role, UserRole
 from app.models.user import User
 from app.services.permission_service import (
@@ -27,7 +28,8 @@ def get_current_user(
     try:
         payload = decode_access_token(token)
         user_id = payload.get("sub")
-        if not user_id:
+        jti = payload.get("jti")
+        if not user_id or not jti:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token payload.",
@@ -44,6 +46,13 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found.",
+        )
+
+    revoked_token = db.scalar(select(RevokedToken).where(RevokedToken.jti == jti))
+    if revoked_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked.",
         )
 
     if not user.is_active or user.is_deleted:

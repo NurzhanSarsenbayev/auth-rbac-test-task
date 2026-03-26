@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 from jose import jwt
 from passlib.context import CryptContext
@@ -25,6 +26,7 @@ def create_access_token(subject: str) -> str:
     payload = {
         "sub": subject,
         "exp": expire,
+        "jti": str(uuid4()),
     }
     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
 
