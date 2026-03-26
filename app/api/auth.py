@@ -2,17 +2,26 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import get_current_user
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.schemas.auth import (
+    LoginRequest,
+    MessageResponse,
+    RegisterRequest,
+    TokenResponse,
+)
 from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post(
-    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> User:
     existing_user = db.scalar(
         select(User).where(
@@ -56,3 +65,8 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse
 
     access_token = create_access_token(subject=str(user.id))
     return TokenResponse(access_token=access_token)
+
+
+@router.post("/logout", response_model=MessageResponse)
+def logout(current_user: User = Depends(get_current_user)) -> MessageResponse:
+    return MessageResponse(message="Successfully logged out.")

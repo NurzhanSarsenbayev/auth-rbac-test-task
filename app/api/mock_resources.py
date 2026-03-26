@@ -4,6 +4,13 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import require_permission
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.mock_resources import (
+    ProjectResponse,
+    ReportResponse,
+    TaskCreateRequest,
+    TaskResponse,
+    TaskUpdateRequest,
+)
 from app.services.permission_service import (
     can_access_object,
     get_user_permission_for_resource,
@@ -38,14 +45,14 @@ def get_object_or_404(items: list[dict], object_id: int) -> dict:
     )
 
 
-@router.get("/projects")
+@router.get("/projects", response_model=list[ProjectResponse])
 def list_projects(
     current_user: User = Depends(require_permission("projects", "read")),
 ) -> list[dict]:
     return projects_data
 
 
-@router.get("/projects/{project_id}")
+@router.get("/projects/{project_id}", response_model=ProjectResponse)
 def get_project(
     project_id: int,
     current_user: User = Depends(require_permission("projects", "read")),
@@ -53,7 +60,7 @@ def get_project(
     return get_object_or_404(projects_data, project_id)
 
 
-@router.get("/tasks")
+@router.get("/tasks", response_model=list[TaskResponse])
 def list_tasks(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("tasks", "read")),
@@ -65,7 +72,7 @@ def list_tasks(
     return [task for task in tasks_data if task["owner_id"] == current_user.id]
 
 
-@router.get("/tasks/{task_id}")
+@router.get("/tasks/{task_id}", response_model=TaskResponse)
 def get_task(
     task_id: int,
     db: Session = Depends(get_db),
@@ -83,24 +90,24 @@ def get_task(
     return task
 
 
-@router.post("/tasks")
+@router.post("/tasks", response_model=TaskResponse)
 def create_task(
-    payload: dict,
+    payload: TaskCreateRequest,
     current_user: User = Depends(require_permission("tasks", "create")),
 ) -> dict:
     new_task = {
         "id": len(tasks_data) + 1,
-        "name": payload.get("name", "New Task"),
+        "name": payload.name,
         "owner_id": current_user.id,
     }
     tasks_data.append(new_task)
     return new_task
 
 
-@router.patch("/tasks/{task_id}")
+@router.patch("/tasks/{task_id}", response_model=TaskResponse)
 def update_task(
     task_id: int,
-    payload: dict,
+    payload: TaskUpdateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("tasks", "update")),
 ) -> dict:
@@ -113,11 +120,11 @@ def update_task(
             detail="Not enough permissions to update this task.",
         )
 
-    task["name"] = payload.get("name", task["name"])
+    task["name"] = payload.name
     return task
 
 
-@router.get("/reports")
+@router.get("/reports", response_model=list[ReportResponse])
 def list_reports(
     current_user: User = Depends(require_permission("reports", "read")),
 ) -> list[dict]:
