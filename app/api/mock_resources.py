@@ -9,7 +9,6 @@ from app.services.permission_service import (
     get_user_permission_for_resource,
 )
 
-
 router = APIRouter(prefix="/mock", tags=["mock-resources"])
 
 

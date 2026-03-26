@@ -2,14 +2,12 @@ from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.api.auth import router as auth_router
-from app.api.users import router as users_router
-from app.api.mock_resources import router as mock_resources_router
 from app.api.admin import router as admin_router
-
+from app.api.auth import router as auth_router
+from app.api.mock_resources import router as mock_resources_router
+from app.api.users import router as users_router
 from app.core.config import settings
 from app.db.session import get_db
-
 
 app = FastAPI(title=settings.app_name)
 

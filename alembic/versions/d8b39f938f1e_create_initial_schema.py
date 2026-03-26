@@ -7,9 +7,9 @@ Create Date: 2026-03-25 06:23:12.808114
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = 'd8b39f938f1e'
@@ -42,7 +42,11 @@ def upgrade() -> None:
     sa.Column('password_hash', sa.String(length=255), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_deleted', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column(
+        'created_at',
+        sa.DateTime(timezone=True),
+        server_default=sa.text('now()'),
+        nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
@@ -58,11 +62,13 @@ def upgrade() -> None:
     sa.Column('can_delete', sa.Boolean(), nullable=False),
     sa.Column('scope', sa.String(length=20), nullable=False),
     sa.ForeignKeyConstraint(['resource_id'], ['resources.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(
+        ['role_id'], ['roles.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('role_id', 'resource_id', name='uq_role_resource_permission')
     )
-    op.create_index(op.f('ix_role_permissions_id'), 'role_permissions', ['id'], unique=False)
+    op.create_index(op.f(
+        'ix_role_permissions_id'), 'role_permissions', ['id'], unique=False)
     op.create_table('user_roles',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('role_id', sa.Integer(), nullable=False),

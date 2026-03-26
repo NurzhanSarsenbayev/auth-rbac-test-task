@@ -8,13 +8,12 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
 from app.db.session import get_db
-from app.models.user import User
 from app.models.role import Role, UserRole
+from app.models.user import User
 from app.services.permission_service import (
     get_user_permission_for_resource,
     has_permission,
 )
-
 
 bearer_scheme = HTTPBearer()
 
