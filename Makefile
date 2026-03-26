@@ -1,4 +1,4 @@
-.PHONY: up down rebuild migrate seed lint test demo logs shell
+.PHONY: up down reset build migrate seed lint fix test demo demo-prepare demo-run logs shell
 
 up:
 	docker compose up -d
@@ -8,8 +8,9 @@ down:
 
 reset:
 	docker compose down -v
+	docker compose up --build -d
 
-rebuild:
+build:
 	docker compose up --build -d
 
 migrate:
@@ -27,8 +28,17 @@ fix:
 test:
 	docker compose exec app pytest
 
-demo: rebuild migrate seed
-	@echo "Demo is ready."
+demo-prepare: reset migrate seed
+	@echo "Demo environment has been reset and prepared."
+	@echo "Swagger UI: http://localhost:8000/docs"
+	@echo "Run 'make demo-run' to execute the demo scenario."
+
+demo-run:
+	app/scripts/demo.sh
+
+demo: reset migrate seed
+	@echo "Running end-to-end demo scenario..."
+	@app/scripts/demo.sh
 	@echo "Swagger UI: http://localhost:8000/docs"
 
 logs:
